@@ -1,0 +1,286 @@
+{
+  "name": "pos-graduaçao",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a8f14469-e723-4199-ad68-177845d1d505",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a5d76332-f91c-4ebc-84e3-7a702878b825",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analise o {{ $json.texto_pagina }}. Identifique se existe alguma oportunidade de Pós-Graduação (Especialização, Mestrado ou Doutorado) que atenda rigorosamente a TODOS os critérios a seguir:\n\nÁrea: Tecnologia da Informação, Ciência da Computação, Engenharia de Software, Sistemas de Informação ou áreas correlatas.\n\nModalidade: EAD / A Distância.\n\nCusto: Gratuita (sem mensalidades).\n\nResponda no formato JSON:\n{ \"eh_valido\": true/false, \"nome_curso\": \"\", \"instituicao\": \"\", \"link\": \"\", \"prazo_inscricao\": \"\" } \n\nResponda APENAS e ESTRITAMENTE com um objeto JSON válido, sem qualquer texto adicional antes ou depois. Não utilize blocos de código Markdown (como json ou ).",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "035b7aab-5010-4073-928e-e2b756b9fe54",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        880,
+        192
+      ],
+      "id": "e113a2bf-4347-4de3-824b-fb2e7d77283b",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "wFbXKCCT62yBgKAq",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "texto_pagina",
+              "cssSelector": "body"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "1b0dbbc9-0da2-4ed6-8c62-9f259a6a391f",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4991cb50-9d64-4398-9688-eb90fe457b85",
+              "leftValue": "={{ $json.output.eh_valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "8986b33f-ce5a-47e8-9be6-c2f12a139efe",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"eh_valido\": true,\n  \"nome_curso\": \"Especialização em Inteligência Artificial\",\n  \"instituicao\": \"IFG\",\n  \"link\": \"https://exemplo.com\",\n  \"prazo_inscricao\": \"25 de outubro de 2026\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1072,
+        208
+      ],
+      "id": "580cf5d6-619e-4362-b292-e282bfb2f3ea",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "chatId": "8900759715",
+        "text": "=🎓 *Nova Pós-Graduação EAD em TI Encontrada!*  📌 *Curso:* {{ $json.output.nome_curso }} 🏛 *Instituição:* {{ $json.output.instituicao }} ⏳ *Prazo de Inscrição:* {{ $json.output.prazo_inscricao }}  🔗 [Clique aqui para acessar a vaga]({{ $json.output.link }})",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1488,
+        -96
+      ],
+      "id": "873b0779-b91c-435f-bf4f-c82cc70fceae",
+      "name": "Send a text message",
+      "webhookId": "3a548b8c-6b63-412c-abfc-50188b2eb76c",
+      "credentials": {
+        "telegramApi": {
+          "id": "ahXPM2hlXh0OxtfK",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n    { json: { url: \"https://www.pebsp.com/cursos/ead/\", nome: \"PEBSP EAD\" } },\n    { json: { url: \"https://posifmg.ia.br/#curso\", nome: \"POS IFMG IA\" } },\n    { json: { url: \"https://novoead.ifs.edu.br/course/index.php?categoryid=11\", nome: \"IFS EAD\" } },\n    { json: { url: \"https://portal.ifpe.edu.br/ead/cursos/especializacao/\", nome: \"IFPE Especialização\" } },\n    { json: { url: \"https://portal.ifce.edu.br/cursos/buscar/?categoria=cursos-de-pos-graduacao\", nome: \"IFCE Pós-Graduação\" } },\n    { json: { url: \"https://www.ifrr.edu.br/cursos/?title=&modality=&type=Especializa%C3%A7%C3%A3o\", nome: \"IFRR Especialização\" } },\n    { json: { url: \"https://www.ifsp.edu.br/pos-graduacao\", nome: \"IFSP Pós-Graduação\" } },\n    { json: { url: \"https://www.ifmg.edu.br/portal/educacao-a-distancia/nossos-cursos\", nome: \"IFMG Nossos Cursos\" } },\n    { json: { url: \"https://portal.ifrj.edu.br/ead/pos-graduacao-ead\", nome: \"IFRJ Pós EAD\" } },\n    { json: { url: \"https://portal.ifrj.edu.br/cursos-pos-graduacao/lato-sensu/tecnologias-educacionais-e-educacao-distancia-campus-nilopolis\", nome: \"IFRJ Nilópolis TEED\" } },\n    { json: { url: \"https://cursos.ifg.edu.br/nivel/esp\", nome: \"IFG Especialização\" } },\n    { json: { url: \"https://infoeducacao.com.br/categorias/pos-graduacao/especializacao-gratuita/\", nome: \"InfoEducação Especialização Gratuita\" } }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "4e015658-3b2e-4170-967f-b831961fd545",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c65c842b-5a7d-41da-a42f-97fcb62d81f6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "acb128e2c1c4884df566fda4288e59f1692e5e8b2afa97454bc9bd9ed3dd8430"
+  },
+  "nodeGroups": [],
+  "id": "q6CQlHYihntFxIrA",
+  "tags": []
+}
