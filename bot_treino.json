@@ -1,0 +1,162 @@
+{
+  "name": "bot_treino",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b0e099fb-c60a-4dfa-8382-17ba327a34ed",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "agentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "WwwEzzDZf2XRCJnL",
+          "cachedResultName": "Personal"
+        },
+        "message": "{{ `Hoje é ${$now.setZone('America/Maceio').toFormat('cccc, dd/MM/yyyy')}.\n\nGere o treino correspondente ao dia de hoje conforme a divisão semanal configurada.\n\nUtilize as skills musculacao, corrida e progressao quando apropriado.\n\nSelecione exclusivamente exercícios cadastrados no Google Sheets.\n\nConsidere o histórico de desempenho, caso esteja disponível.\n\nRetorne o treino completo com exercícios, séries, repetições, descansos e caminhada, quando aplicável.\n\nA mensagem será enviada ao usuário pelo Telegram.` }}",
+        "advanced": {}
+      },
+      "type": "n8n-nodes-base.messageAnAgent",
+      "typeVersion": 3.1,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "3f273820-ee96-4f36-96fa-4c1faa0794a9",
+      "name": "Message an Agent"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "0I8fdBTgsxZVMVjU",
+          "mode": "list",
+          "cachedResultName": "exercicios",
+          "cachedResultUrl": "/projects/hV4TLft7uP2xOpir/datatables/0I8fdBTgsxZVMVjU"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "30f666b8-6a8c-44df-977f-c24d8bd0fe92",
+      "name": "Get row(s)"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "exercicios",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "e460bb5b-56f2-4ce4-9d12-92d991780b79",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "chatId": "8900759715",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "ca22af50-26ad-4750-b21e-b20083bb1cc8",
+      "name": "Send a text message",
+      "webhookId": "ed192fd3-ccd2-4d4b-b983-ede8bdc93cee",
+      "credentials": {
+        "telegramApi": {
+          "id": "KdR1Stmphpe53Xc6",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Message an Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message an Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "61cd060d-7bbd-45af-85de-e3b9eb2822d1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3fa036c40a539634d9d78397ba4a3230682edba93469dacc7176f5be76843196"
+  },
+  "nodeGroups": [],
+  "id": "9qo1ojCg6PsFd10n",
+  "tags": []
+}
