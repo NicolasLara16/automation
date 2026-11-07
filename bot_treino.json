@@ -1,5 +1,5 @@
 {
-  "name": "bot_treino",
+  "name": "bot_treino_publico",
   "nodes": [
     {
       "parameters": {
@@ -25,8 +25,8 @@
         "agentId": {
           "__rl": true,
           "mode": "list",
-          "value": "WwwEzzDZf2XRCJnL",
-          "cachedResultName": "Personal"
+          "value": "REPLACE_WITH_YOUR_AGENT_ID",
+          "cachedResultName": "Select your agent"
         },
         "message": "{{ `Hoje é ${$now.setZone('America/Maceio').toFormat('cccc, dd/MM/yyyy')}.\n\nGere o treino correspondente ao dia de hoje conforme a divisão semanal configurada.\n\nUtilize as skills musculacao, corrida e progressao quando apropriado.\n\nSelecione exclusivamente exercícios cadastrados no Google Sheets.\n\nConsidere o histórico de desempenho, caso esteja disponível.\n\nRetorne o treino completo com exercícios, séries, repetições, descansos e caminhada, quando aplicável.\n\nA mensagem será enviada ao usuário pelo Telegram.` }}",
         "advanced": {}
@@ -45,10 +45,9 @@
         "operation": "get",
         "dataTableId": {
           "__rl": true,
-          "value": "0I8fdBTgsxZVMVjU",
+          "value": "REPLACE_WITH_YOUR_DATATABLE_ID",
           "mode": "list",
-          "cachedResultName": "exercicios",
-          "cachedResultUrl": "/projects/hV4TLft7uP2xOpir/datatables/0I8fdBTgsxZVMVjU"
+          "cachedResultName": "exercicios"
         },
         "returnAll": true
       },
@@ -78,7 +77,7 @@
     },
     {
       "parameters": {
-        "chatId": "8900759715",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "={{ $json.text }}",
         "additionalFields": {}
       },
@@ -89,74 +88,9 @@
         0
       ],
       "id": "ca22af50-26ad-4750-b21e-b20083bb1cc8",
-      "name": "Send a text message",
-      "webhookId": "ed192fd3-ccd2-4d4b-b983-ede8bdc93cee",
-      "credentials": {
-        "telegramApi": {
-          "id": "KdR1Stmphpe53Xc6",
-          "name": "Telegram account"
-        }
-      }
+      "name": "Send a text message"
     }
   ],
   "pinData": {},
   "connections": {
     "Schedule Trigger": {
-      "main": [
-        [
-          {
-            "node": "Get row(s)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get row(s)": {
-      "main": [
-        [
-          {
-            "node": "Aggregate",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Aggregate": {
-      "main": [
-        [
-          {
-            "node": "Message an Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Message an Agent": {
-      "main": [
-        [
-          {
-            "node": "Send a text message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
-  "active": true,
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate"
-  },
-  "versionId": "61cd060d-7bbd-45af-85de-e3b9eb2822d1",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "3fa036c40a539634d9d78397ba4a3230682edba93469dacc7176f5be76843196"
-  },
-  "nodeGroups": [],
-  "id": "9qo1ojCg6PsFd10n",
-  "tags": []
-}
