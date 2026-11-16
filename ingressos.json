@@ -1,0 +1,233 @@
+{
+  "name": "ingressos",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "46921c8e-e5ab-4911-a843-8d8710e07466",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst fontes = [\n  {\n    nome: \"Inter Miami - Notícias\",\n    url: \"https://www.intermiamicf.com/news/\",\n    tipo: \"noticias\"\n  },\n  {\n    nome: \"Inter Miami - Tickets\",\n    url: \"https://www.intermiamicf.com/tickets/\",\n    tipo: \"ingressos\"\n  },\n  {\n    nome: \"Inter Miami - Anúncio do Jogo\",\n    url: \"https://www.intermiamicf.com/news/international-friendly-river-plate-vs-inter-miami-cf-at-estadio-monumental\",\n    tipo: \"oficial\"\n  },\n  {\n    nome: \"River Plate - Ingressos\",\n    url: \"https://www.riverplate.com/tickets\",\n    tipo: \"ingressos\"\n  },\n  {\n    nome: \"River Plate - Como Comprar\",\n    url: \"https://www.riverplate.com/tickets/how-to-buy-tickets\",\n    tipo: \"informacoes\"\n  },\n  {\n    nome: \"River Plate - Calendário\",\n    url: \"https://www.riverplate.com/venta-de-entradas/calendario-de-partidos\",\n    tipo: \"oficial\"\n  },\n  {\n    nome: \"River Plate - Página Principal\",\n    url: \"https://www.riverplate.com/\",\n    tipo: \"noticias\"\n  }\n];\n\nreturn fontes.map(fonte => ({\n  json: {\n    ...fonte,\n    jogo: \"River Plate vs Inter Miami\",\n    palavrasChave: [\n      \"inter miami\",\n      \"river plate\",\n      \"entradas\",\n      \"tickets\",\n      \"venta de entradas\",\n      \"venta general\",\n      \"preventa\",\n      \"entradas disponibles\",\n      \"tickets on sale\",\n      \"comprar\"\n    ]\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "921433e3-4aca-411f-9c62-6df219595d41",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "e25dda64-981b-45c2-b88d-f9c6b8191e31",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "texto",
+              "cssSelector": "body"
+            },
+            {
+              "key": "links",
+              "cssSelector": "a[href]",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "ab67d235-4c0b-40c3-9a73-08da5a72e249",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst items = $input.all();\n\nconst resultados = items.map((item, index) => {\n  const texto = String(item.json.texto || \"\");\n  const textoNormalizado = texto.toLowerCase();\n\n  const mencionaRiver =\n    /river plate/i.test(textoNormalizado);\n\n  const mencionaMiami =\n    /inter miami/i.test(textoNormalizado);\n\n  const palavrasVenda = [\n    \"venta de entradas\",\n    \"entradas disponibles\",\n    \"tickets on sale\",\n    \"tickets available\",\n    \"venta general\",\n    \"comprar entradas\",\n    \"buy tickets\"\n  ];\n\n  const termosEncontrados = palavrasVenda.filter(\n    termo => textoNormalizado.includes(termo)\n  );\n\n  return {\n    json: {\n      fonte: index + 1,\n      jogoEncontrado: mencionaRiver && mencionaMiami,\n      indiciosVenda: termosEncontrados,\n      possivelVenda: (\n        mencionaRiver &&\n        mencionaMiami &&\n        termosEncontrados.length > 0\n      ),\n      trecho: texto.slice(0, 1000)\n    }\n  };\n});\n\nreturn resultados;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "9061f02a-6b27-438e-a2e6-aa32a07a0359",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "0ad1195b-9dd6-4f8b-881d-5a7bb22b1478",
+              "leftValue": "={{ $json.possivelVenda }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "8915904c-b2b5-42e1-9917-0e2eb6313468",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "8900759715",
+        "text": "=\n{{ `🎟️ ALERTA DE INGRESSOS\n\n⚽ River Plate x Inter Miami\n📅 19/01/2027\n🏟️ Estádio Monumental — Buenos Aires\n\n🔎 Jogo identificado: ${$json.jogoEncontrado ? \"Sim\" : \"Não\"}\n\n🎫 Indícios de venda:\n${$json.indiciosVenda?.join(\", \") || \"Nenhum\"}\n\n⚠️ Possível novidade sobre os ingressos!\nConfira os canais oficiais antes de comprar.` }}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1312,
+        -96
+      ],
+      "id": "0826cd2b-ebc0-4fcf-a8dd-242fdf4f30c8",
+      "name": "Send a text message",
+      "webhookId": "13012b5a-1b91-47d8-a4b6-724c5efd0271",
+      "credentials": {
+        "telegramApi": {
+          "id": "VGde4YUgMbVXN6W6",
+          "name": "riverVSmiami"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0ec3c4aa-f456-4146-bb9b-828ee4ab28b8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3fa036c40a539634d9d78397ba4a3230682edba93469dacc7176f5be76843196"
+  },
+  "nodeGroups": [],
+  "id": "pRzCaD6sJe5jnhw8",
+  "tags": []
+}
